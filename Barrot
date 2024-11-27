@@ -1,10 +1,25 @@
+/* *****************************************************************
+** Author:  John Sugden-van Dyk,   
+** Creation Date:  November 26, 2024                                   
+** Description:  take transactions from a holding table named NEW_TRANSACTIONS and insert them
+**          into the TRANSACTION_DETAIL and TRANSACTION_HISTORY tables. At the same time the program
+**          will update the appropriate account balance in the ACCOUNT table. 
+**          once a transaction is successfully processed, it will be removed from the holding table.  
+**
+** Modifications:
+**
+**
+**
+**
+**                                            
+*******************************************************************/
 DECLARE
     -- Declaration of variables
 
     -- Outer cursor to get each unique transaction number
-    CURSOR c_transaction IS
-        SELECT DISTINCT transaction_no
-        FROM new_transactions;
+    CURSOR c_transaction IS 
+        SELECT DISTINCT transaction_no, transaction_date, description,
+        FROM new_transactions;  
 
     -- Variable for the outer cursor
     v_transaction_no       new_transactions.transaction_no%TYPE;
@@ -35,19 +50,12 @@ BEGIN
     -- Open the transaction cursor
     OPEN c_transaction;
     LOOP
-        FETCH c_transaction INTO v_transaction_no;
-        EXIT WHEN c_transaction%NOTFOUND;
+        FETCH c_transaction INTO v_transaction_no, v_transaction_date, v_description;        
+        EXIT WHEN c_transaction%NOTFOUND;   
 
         -- Reset totals for the current transaction
         v_debit_sum := 0;
         v_credit_sum := 0;
-
-        -- Retrieve transaction_date and description for the current transaction
-        SELECT transaction_date, description
-        INTO v_transaction_date, v_description
-        FROM new_transactions
-        WHERE transaction_no = v_transaction_no
-          AND ROWNUM = 1;
 
         -- Open the detail cursor for the current transaction
         OPEN c_detail(v_transaction_no);
