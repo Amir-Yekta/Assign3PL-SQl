@@ -18,7 +18,7 @@ DECLARE
 
     -- Outer cursor to get each unique transaction number
     CURSOR c_transaction IS 
-        SELECT DISTINCT transaction_no, transaction_date, description,
+        SELECT DISTINCT transaction_no, transaction_date, description
         FROM new_transactions;  
 
     -- Variable for the outer cursor
@@ -56,6 +56,17 @@ BEGIN
         -- Reset totals for the current transaction
         v_debit_sum := 0;
         v_credit_sum := 0;
+
+        -- Insert into TRANSACTION_HISTORY
+        INSERT INTO transaction_history (
+            transaction_no,
+            transaction_date,
+            description
+        ) VALUES (
+            v_transaction_no,
+            v_transaction_date,
+            v_description
+        );
 
         -- Open the detail cursor for the current transaction
         OPEN c_detail(v_transaction_no);
@@ -101,7 +112,7 @@ BEGIN
                 v_transaction_type,
                 v_transaction_amount
             );
-
+            
             -- Accumulate total debits and credits
             IF v_transaction_type = 'D' THEN
                 v_debit_sum := v_debit_sum + v_transaction_amount;
@@ -117,17 +128,6 @@ BEGIN
 
         END LOOP;
         CLOSE c_detail;
-
-        -- Insert into TRANSACTION_HISTORY
-        INSERT INTO transaction_history (
-            transaction_no,
-            transaction_date,
-            description
-        ) VALUES (
-            v_transaction_no,
-            v_transaction_date,
-            v_description
-        );
 
         -- Delete processed transactions from NEW_TRANSACTIONS
         DELETE FROM new_transactions
