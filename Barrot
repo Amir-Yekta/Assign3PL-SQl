@@ -1,5 +1,5 @@
 /* *****************************************************************
-** Author:  John Sugden-van Dyk,   
+** Author:  John Sugden-van Dyk,   Dalaso Hankebo
 ** Creation Date:  November 26, 2024                                   
 ** Description:  take transactions from a holding table named NEW_TRANSACTIONS and insert them
 **          into the TRANSACTION_DETAIL and TRANSACTION_HISTORY tables. At the same time the program
