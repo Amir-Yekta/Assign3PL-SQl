@@ -54,6 +54,31 @@ DECLARE
     -- Variable to check if there was any errors
     v_error_flag    BOOLEAN := FALSE;
 
+     v_error_logged BOOLEAN := FALSE; --  first error logged // Kourosh 
+     v_error_msg    VARCHAR2(200); -- // Kourosh 
+
+     -- if not logged for the transaction the throw log error // Kouroush 
+     PROCEDURE log_error
+     (
+        p_trans_no new_transactions.transaction_no%TYPE,
+        p_trans_date DATE,
+        p_desc VARCHAR2,
+        p_msg VARCHAR2
+    )
+    
+    IS
+         
+    BEGIN
+        IF NOT v_error_logged THEN
+            INSERT INTO wkis_error_log (transaction_no, transaction_date, description, error_msg)
+            VALUES (p_trans_no, p_trans_date, p_desc, p_msg);
+            v_error_logged := TRUE;
+
+        END IF;
+        DBMS_OUTPUT.PUT_LINE('Error logged for transaction '||p_trans_no||': '||p_msg);
+
+    END log_error;
+
     -- if/when you are building the error log table this is it incase you need it. 
 
     -- this is the error log table
@@ -66,6 +91,8 @@ DECLARE
 
 
 BEGIN
+
+    DBMS_OUTPUT.PUT_LINE('Transaction processing...'); -- // declare for debug and error // Kourosh 
     -- Open the transaction cursor
     OPEN c_transaction;
     LOOP
@@ -74,20 +101,92 @@ BEGIN
 
         -- reset error flag for the transaction 
         v_error_flag := FALSE;
+        v_error_logged := FALSE; 
+        v_error_msg := NULL;
+        v_debit_sum := 0;
+        v_credit_sum := 0;
+
 
         -- check for missing transaction numbers 
         IF v_transaction_no IS NULL THEN
             -- need to properly insert into the error log table,
             v_error_flag := TRUE;
-
             -- temp output to showcase error
             DBMS_OUTPUT.PUT_LINE('Transaction No: is missing');
-            CONTINUE;
+
+            -- Log error (if not already logged)
+            log_error(NULL, v_transaction_date, v_description, v_error_msg);
+            -- CONTINUE;
+
         END IF;
 
-        -- Reset totals for the current transaction
-        v_debit_sum := 0;
-        v_credit_sum := 0;
+
+-- If no error then continue
+
+IF NOT v_error_flag THEN
+
+    OPEN c_detail(v_transaction_no);
+
+    LOOP
+        FETCH c_detail INTO v_account_no, v_transaction_type, v_transaction_amount;
+
+        EXIT WHEN c_detail%NOTFOUND;
+
+        -- Validate line data
+
+        IF NOT v_error_flag THEN
+
+            -- Look for transaction type
+
+            IF v_transaction_type NOT IN (k_transaction_type_credit, k_transaction_type_debit) THEN
+
+                v_error_flag := TRUE;
+                v_error_msg := 'ERROR: Invalid transaction type '||v_transaction_type||' for transaction '||v_transaction_no||'.';
+                log_error(v_transaction_no, v_transaction_date, v_description, v_error_msg);
+
+            END IF;
+
+            -- if negative amount
+            IF NOT v_error_flag AND v_transaction_amount < 0 THEN
+
+                v_error_flag := TRUE;
+                v_error_msg := 'ERROR: Negative transaction amount '||v_transaction_amount||' for transaction '||v_transaction_no||'.';
+                log_error(v_transaction_no, v_transaction_date, v_description, v_error_msg);
+
+            END IF;
+
+            -- Check account existence
+            
+            IF NOT v_error_flag THEN
+
+                BEGIN
+
+                    SELECT account_balance, account_type_code
+                      INTO v_account_balance, v_account_type_code
+                      FROM account WHERE account_no = v_account_no;
+
+                EXCEPTION
+                    WHEN NO_DATA_FOUND THEN
+                        v_error_flag := TRUE;
+                        v_error_msg := 'ERROR: Invalid account number '||v_account_no||' for transaction '||v_transaction_no||'.';
+                        log_error(v_transaction_no, v_transaction_date, v_description, v_error_msg);
+                END;
+
+            END IF;
+
+        END IF;
+
+        
+        -- Note: next steps will involve calculations and further processing.
+        -- compute the debit and credit and update the account balances.
+        -- Also make sure to properly insert into TRANSACTION_DETAIL and handle the deletion of those transactions that have been processed from NEW_TRANSACTIONS where applicable.
+
+    END LOOP;
+
+    CLOSE c_detail;
+
+END IF;
+
 
         -- Insert into TRANSACTION_HISTORY if no errors.
         IF NOT v_error_flag THEN
