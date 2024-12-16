@@ -172,16 +172,17 @@ BEGIN
             DELETE FROM new_transactions WHERE transaction_no = v_transaction_no;
 
         EXCEPTION
-            -- Handle unanticipated errors
-            WHEN OTHERS THEN
-                INSERT INTO wkis_error_log (
-                    transaction_no, transaction_date, description, error_msg
-                ) VALUES (
-                    v_transaction_no, v_transaction_date, v_description,
-                    'Error: ' || SQLERRM
-                );
-                ROLLBACK;
-        END;
+    -- Handle unanticipated errors
+    WHEN OTHERS THEN
+        INSERT INTO wkis_error_log (
+            transaction_no, transaction_date, description, error_msg
+        ) VALUES (
+            v_transaction_no, v_transaction_date, v_description,
+            'Error: ' || TO_CHAR(SQLERRM)
+        );
+        ROLLBACK;
+END;
+
     END LOOP;
 
     CLOSE c_transaction;
