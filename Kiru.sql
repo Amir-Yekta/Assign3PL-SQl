@@ -1,3 +1,19 @@
+/* *****************************************************************
+** Author:  Amir Hossein, Dalaso Hankebo, John Sugden-van Dyk, Mathieu Frenette
+** Creation Date:  November 26, 2024                                   
+** Description:  take transactions from a holding table named NEW_TRANSACTIONS and insert them
+**          into the TRANSACTION_DETAIL and TRANSACTION_HISTORY tables. At the same time the program
+**          will update the appropriate account balance in the ACCOUNT table. 
+**          once a transaction is successfully processed, it will be removed from the holding table.  
+**
+** Modifications:
+**
+**
+**
+**
+**                                            
+*******************************************************************/
+
 DECLARE
     -- Constants for transaction types
     c_credit CONSTANT CHAR(1) := 'C';
