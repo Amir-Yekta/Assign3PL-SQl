@@ -106,8 +106,6 @@ BEGIN
                             v_transaction_no, v_transaction_date, v_description,
                             'Error: Invalid account number ' || v_account_no
                         );
-                        ROLLBACK;
-                        CLOSE c_detail;
                         CONTINUE;
                 END;
 
@@ -119,8 +117,6 @@ BEGIN
                         v_transaction_no, v_transaction_date, v_description,
                         'Error: Negative transaction amount ' || v_transaction_amount
                     );
-                    ROLLBACK;
-                    CLOSE c_detail;
                     CONTINUE;
                 END IF;
 
@@ -132,8 +128,6 @@ BEGIN
                         v_transaction_no, v_transaction_date, v_description,
                         'Error: Invalid transaction type ' || v_transaction_type
                     );
-                    ROLLBACK;
-                    CLOSE c_detail;
                     CONTINUE;
                 END IF;
 
@@ -180,7 +174,6 @@ BEGIN
                     v_transaction_no, v_transaction_date, v_description,
                     'Error: Debits and/or credits do not balance'
                 );
-                ROLLBACK;
                 CONTINUE;
             END IF;
 
@@ -209,6 +202,5 @@ BEGIN
 
     -- Commit the transaction
     COMMIT;
-
 END;
 /
