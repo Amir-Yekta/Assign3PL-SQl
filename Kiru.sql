@@ -47,12 +47,12 @@ BEGIN
 
         -- Exception handling for the current transaction
         BEGIN
-            -- **Handle Missing transaction number (NULL transaction_no)**
+            -- Handle Missing transaction number (NULL transaction_no)
             IF v_transaction_no IS NULL THEN
                 INSERT INTO wkis_error_log (
                     transaction_no, transaction_date, description, error_msg
                 ) VALUES (
-                    NULL, v_transaction_date, v_description, 
+                    NULL, v_transaction_date, v_description,
                     'Error: Missing transaction number'
                 );
                 CONTINUE;
@@ -95,7 +95,7 @@ BEGIN
                         CONTINUE;
                 END;
 
-                -- **Handle Negative transaction amount**
+                -- Handle Negative transaction amount
                 IF v_transaction_amount < 0 THEN
                     INSERT INTO wkis_error_log (
                         transaction_no, transaction_date, description, error_msg
@@ -108,7 +108,7 @@ BEGIN
                     CONTINUE;
                 END IF;
 
-                -- **Handle Invalid transaction type**
+                -- Handle Invalid transaction type
                 IF v_transaction_type NOT IN (c_credit, c_debit) THEN
                     INSERT INTO wkis_error_log (
                         transaction_no, transaction_date, description, error_msg
@@ -172,22 +172,21 @@ BEGIN
             DELETE FROM new_transactions WHERE transaction_no = v_transaction_no;
 
         EXCEPTION
-    -- Handle unanticipated errors
-    WHEN OTHERS THEN
-        DECLARE
-            v_error_message VARCHAR2(200);
-        BEGIN
-            v_error_message := 'Error: ' || SQLERRM; -- Store the error message in a variable
-            INSERT INTO wkis_error_log (
-                transaction_no, transaction_date, description, error_msg
-            ) VALUES (
-                v_transaction_no, v_transaction_date, v_description,
-                v_error_message
-            );
-            ROLLBACK; -- Roll back the current transaction
+        -- Handle unanticipated errors
+        WHEN OTHERS THEN
+            DECLARE
+                v_error_message VARCHAR2(200);
+            BEGIN
+                v_error_message := 'Error: ' || SQLERRM; -- Store the error message in a variable
+                INSERT INTO wkis_error_log (
+                    transaction_no, transaction_date, description, error_msg
+                ) VALUES (
+                    v_transaction_no, v_transaction_date, v_description,
+                    v_error_message
+                );
+                ROLLBACK; -- Roll back the current transaction
+            END;
         END;
-
-
     END LOOP;
 
     CLOSE c_transaction;
