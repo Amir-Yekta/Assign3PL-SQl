@@ -174,14 +174,19 @@ BEGIN
         EXCEPTION
     -- Handle unanticipated errors
     WHEN OTHERS THEN
-        INSERT INTO wkis_error_log (
-            transaction_no, transaction_date, description, error_msg
-        ) VALUES (
-            v_transaction_no, v_transaction_date, v_description,
-            'Error: ' || TO_CHAR(SQLERRM)
-        );
-        ROLLBACK;
-END;
+        DECLARE
+            v_error_message VARCHAR2(200);
+        BEGIN
+            v_error_message := 'Error: ' || SQLERRM; -- Store the error message in a variable
+            INSERT INTO wkis_error_log (
+                transaction_no, transaction_date, description, error_msg
+            ) VALUES (
+                v_transaction_no, v_transaction_date, v_description,
+                v_error_message
+            );
+            ROLLBACK; -- Roll back the current transaction
+        END;
+
 
     END LOOP;
 
